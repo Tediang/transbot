@@ -1,0 +1,57 @@
+# Transbot
+
+Chrome 划词翻译。译文来自 Azure Translator，密钥只留在本机。
+
+支持简体中文、英语、日语、韩语。单词可以出词典义项，句子走整段翻译。页面里有气泡，工具栏里有翻译框。
+
+## 功能
+
+- 选中文字后就地出气泡。默认自动翻译；关掉之后，选区旁边出现「翻译」按钮。
+- 右键菜单「Transbot：翻译」，以及快捷键 `Alt+Shift+T`，始终翻译当前选区。快捷键可在 `chrome://extensions/shortcuts` 里改。
+- 工具栏弹出翻译框，可指定源语言和目标语言，`Ctrl` 或 `Cmd` + `Enter` 提交。
+- 语言按一对来回译：选中的文字是「我的语言」时译成「外语」，否则译成「我的语言」。气泡和翻译框里可以临时改目标语言。
+- 较短的词，并且其中一边是英语时，使用词典，带词性和回译。句子，以及日语、韩语、中文之间的词，使用文本翻译。
+- 气泡可以钉住。钉住后留在原地，再次划词会在新选区旁出现「翻译」，点它会更新这个气泡。钉住时拖标题栏移动，拖右下角改变大小。
+- 一次最多 5000 个字符。
+
+## 安装
+
+需要 Node.js 20 或更新版本，以及一个 Azure Translator 资源。
+
+```bash
+npm install
+npm run build
+```
+
+在 Chrome 打开 `chrome://extensions`，打开「开发者模式」，选择「加载已解压的扩展程序」，指向 `.output/chrome-mv3`。
+
+Chrome 不接受网络路径上的未打包扩展。在 WSL 里构建时，先把这个目录复制到 Windows 本地磁盘再加载。
+
+打开扩展的设置页，填入密钥：
+
+1. 在 Azure 门户打开 Translator 资源的「密钥和终结点」，复制 Key 1。
+2. 全球单服务资源的「区域」留空。区域资源或多服务资源填写创建时的区域，例如 `eastasia`。
+3. 选好「我的语言」和「外语」，保存。可以用「测试连接」确认密钥可用。
+
+接口地址一般保持默认 `https://api.cognitive.microsofttranslator.com`。只接受 Azure Translator 的官方域名。
+
+## 开发
+
+```bash
+npm run dev      # 监听构建
+npm test         # 单元测试
+npm run check    # 类型检查
+npm run zip      # 打包成 zip
+```
+
+`npm run dev` 会尝试打开浏览器。只想在已安装的 Chrome 里看效果时，用 `npm run build`，然后在扩展管理页重新加载。
+
+推送 `vX.Y.Z` 标签后，GitHub Actions 会跑测试并打出 Chrome 压缩包，挂到同名 Release 上。包里的扩展版本与标签一致，例如 `v0.1.0` 得到 `transbot-0.1.0-chrome.zip`。
+
+## 隐私
+
+密钥、区域和语言设置写在 `chrome.storage.local`，不会打进扩展包，也不会发到扩展作者的服务器。翻译请求从这台浏览器直接发到你配置的 Azure 终结点。
+
+## 许可证
+
+[MIT](LICENSE)。著作权归项目贡献者。

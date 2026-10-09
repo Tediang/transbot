@@ -1,0 +1,51 @@
+name: 发布
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  chrome:
+    name: 构建 Chrome 压缩包
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: 核对标签版本
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "标签需要是 vX.Y.Z，当前是 ${GITHUB_REF_NAME}"
+            exit 1
+          fi
+          echo "TRANSBOT_VERSION=${version}" >> "$GITHUB_ENV"
+
+      - run: npm ci
+      - run: npm run check
+      - run: npm test
+      - run: npm run zip
+
+      - name: 上传到 Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          zip=".output/transbot-${TRANSBOT_VERSION}-chrome.zip"
+          if [[ ! -f "$zip" ]]; then
+            echo "没有找到 ${zip}"
+            ls -la .output
+            exit 1
+          fi
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" "$zip" --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" "$zip" --title "$GITHUB_REF_NAME" --generate-notes
+          fi
