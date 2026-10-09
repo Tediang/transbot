@@ -1,7 +1,8 @@
 import "~/assets/page.css";
 import { displayLang, LANGS, type LangCode } from "@/lib/languages";
 import { isResult, langChoice, type MetaResponse } from "@/lib/messages";
-import { fillResult } from "@/lib/render";
+import { fillResult, routeLabel } from "@/lib/render";
+import { providerLabel, type Provider } from "@/lib/settings";
 
 const source = document.querySelector<HTMLTextAreaElement>("#source");
 const from = document.querySelector<HTMLSelectElement>("#from");
@@ -9,8 +10,9 @@ const to = document.querySelector<HTMLSelectElement>("#to");
 const go = document.querySelector<HTMLButtonElement>("#go");
 const status = document.querySelector<HTMLParagraphElement>("#status");
 const result = document.querySelector<HTMLElement>("#result");
+const service = document.querySelector<HTMLParagraphElement>("#service");
 
-if (!source || !from || !to || !go || !status || !result) {
+if (!source || !from || !to || !go || !status || !result || !service) {
   throw new Error("翻译框缺少必要的页面元素。");
 }
 
@@ -20,6 +22,7 @@ const toSelect = to;
 const goButton = go;
 const statusLine = status;
 const resultBox = result;
+const serviceLine = service;
 
 void init();
 
@@ -41,6 +44,7 @@ sourceInput.addEventListener("keydown", (event) => {
 
 async function init(): Promise<void> {
   const meta = await readMeta();
+  showService(meta?.provider);
   const auto = meta ? `自动（${displayLang(meta.primary)} ↔ ${displayLang(meta.secondary)}）` : "自动";
   fillSelect(fromSelect, auto);
   fillSelect(toSelect, auto);
@@ -76,7 +80,8 @@ async function translate(): Promise<void> {
     resultBox.replaceChildren();
     const route = document.createElement("p");
     route.className = "route";
-    route.textContent = `${displayLang(response.sourceLang)} → ${displayLang(response.targetLang)} · ${response.mode === "dictionary" ? "词典" : "译文"}`;
+    showService(response.provider);
+    route.textContent = routeLabel(response);
     const body = document.createElement("div");
     fillResult(body, response);
     resultBox.append(route, body);
@@ -105,6 +110,11 @@ async function readMeta(): Promise<MetaResponse | null> {
   const response: unknown = await browser.runtime.sendMessage({ type: "transbot:meta" }).catch(() => null);
   if (!response || typeof response !== "object" || !("primary" in response)) return null;
   return response as MetaResponse;
+}
+
+function showService(provider: Provider | undefined): void {
+  if (!provider) return;
+  serviceLine.textContent = providerLabel(provider);
 }
 
 function showStatus(message: string, kind: "muted" | "error"): void {

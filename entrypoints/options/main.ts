@@ -1,12 +1,17 @@
 import "~/assets/page.css";
 import { isResult } from "@/lib/messages";
 import { isLangCode, LANGS } from "@/lib/languages";
-import { assertEndpoint, DEFAULT_ENDPOINT, normalizeSettings, type Settings } from "@/lib/settings";
+import { assertEndpoint, DEFAULT_ENDPOINT, normalizeSettings, type Provider, type Settings } from "@/lib/settings";
 import { loadSettings, settingsItem } from "@/lib/storage";
 
+const providerSelect = required<HTMLSelectElement>("#provider");
+const azureFields = required<HTMLElement>("#azure-fields");
+const volcFields = required<HTMLElement>("#volc-fields");
 const keyInput = required<HTMLInputElement>("#key");
 const regionInput = required<HTMLInputElement>("#region");
 const endpointInput = required<HTMLInputElement>("#endpoint");
+const volcAccessInput = required<HTMLInputElement>("#volc-access-key");
+const volcSecretInput = required<HTMLInputElement>("#volc-secret-key");
 const primarySelect = required<HTMLSelectElement>("#primary");
 const secondarySelect = required<HTMLSelectElement>("#secondary");
 const selectionInput = required<HTMLInputElement>("#selection-enabled");
@@ -16,10 +21,15 @@ fillLangSelect(primarySelect);
 fillLangSelect(secondarySelect);
 
 document.querySelector("#toggle-key")?.addEventListener("click", () => {
-  const hidden = keyInput.type === "password";
-  keyInput.type = hidden ? "text" : "password";
-  const toggle = document.querySelector("#toggle-key");
-  if (toggle) toggle.textContent = hidden ? "隐藏" : "显示";
+  toggleSecret(keyInput, "#toggle-key");
+});
+
+document.querySelector("#toggle-secret")?.addEventListener("click", () => {
+  toggleSecret(volcSecretInput, "#toggle-secret");
+});
+
+providerSelect.addEventListener("change", () => {
+  showProvider(providerSelect.value === "volcengine" ? "volcengine" : "azure");
 });
 
 document.querySelector("#save")?.addEventListener("click", () => {
@@ -33,12 +43,16 @@ document.querySelector("#test")?.addEventListener("click", () => {
 void loadSettings().then(fillForm);
 
 function fillForm(settings: Settings): void {
+  providerSelect.value = settings.provider;
   keyInput.value = settings.key;
   regionInput.value = settings.region;
   endpointInput.value = settings.endpoint || DEFAULT_ENDPOINT;
+  volcAccessInput.value = settings.volcAccessKey;
+  volcSecretInput.value = settings.volcSecretKey;
   primarySelect.value = settings.primary;
   secondarySelect.value = settings.secondary;
   selectionInput.checked = settings.selectionEnabled;
+  showProvider(settings.provider);
 }
 
 async function persist(doneMessage: string): Promise<Settings | null> {
@@ -93,13 +107,28 @@ function readDraft(): Settings | null {
     return null;
   }
   return normalizeSettings({
+    provider: providerSelect.value === "volcengine" ? "volcengine" : "azure",
     key: keyInput.value,
     region: regionInput.value,
     endpoint,
+    volcAccessKey: volcAccessInput.value,
+    volcSecretKey: volcSecretInput.value,
     primary,
     secondary,
     selectionEnabled: selectionInput.checked,
   });
+}
+
+function showProvider(provider: Provider): void {
+  azureFields.hidden = provider !== "azure";
+  volcFields.hidden = provider !== "volcengine";
+}
+
+function toggleSecret(input: HTMLInputElement, buttonSelector: string): void {
+  const hidden = input.type === "password";
+  input.type = hidden ? "text" : "password";
+  const toggle = document.querySelector(buttonSelector);
+  if (toggle) toggle.textContent = hidden ? "隐藏" : "显示";
 }
 
 function fillLangSelect(select: HTMLSelectElement): void {

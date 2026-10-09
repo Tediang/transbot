@@ -48,6 +48,9 @@ a { color: var(--accent); }
 
 .panel, .sheet { display: flex; flex-direction: column; gap: 12px; padding: 16px; }
 
+#azure-fields, #volc-fields { display: flex; flex-direction: column; gap: 12px; }
+#azure-fields[hidden], #volc-fields[hidden] { display: none; }
+
 .top, .row, .check, .actions { display: flex; align-items: center; gap: 8px; }
 
 .top { justify-content: space-between; }

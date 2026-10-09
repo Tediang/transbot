@@ -125,7 +125,7 @@ export default defineContentScript({
         bubble.showMessage(text, rect, `一次最多翻译 ${MAX_CHARS} 个字符。`);
         return;
       }
-      bubble.show(text, rect);
+      bubble.show(text, rect, meta.provider === "volcengine" || meta.provider === "azure" ? meta.provider : undefined);
     }
   },
 });
@@ -153,6 +153,6 @@ function readSelection(target: EventTarget | null): { text: string; rect: DOMRec
   return { text, rect };
 }
 
-function isMeta(value: unknown): value is { selectionEnabled: boolean } {
+function isMeta(value: unknown): value is { selectionEnabled: boolean; provider?: string } {
   return !!value && typeof value === "object" && typeof (value as { selectionEnabled?: unknown }).selectionEnabled === "boolean";
 }

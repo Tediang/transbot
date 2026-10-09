@@ -1,4 +1,5 @@
 import { isLangCode, type LangCode } from "./languages";
+import type { Provider } from "./settings";
 import type { Translation } from "./translate";
 
 export type TranslateRequest = {
@@ -22,6 +23,7 @@ export type MetaResponse = {
   hasKey: boolean;
   primary: LangCode;
   secondary: LangCode;
+  provider: Provider;
 };
 
 export type ResultMessage = ({ ok: true } & Translation) | { ok: false; error: string };

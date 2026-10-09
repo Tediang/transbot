@@ -9,23 +9,56 @@
     <main class="sheet">
       <header>
         <h1>Transbot 设置</h1>
-        <p class="lead">翻译直接从这台浏览器调用 Azure。密钥只存在本机，不会放进插件包。</p>
+        <p class="lead">翻译直接从这台浏览器调用你选择的服务。密钥只存在本机，不会放进插件包。</p>
       </header>
 
       <label class="stack">
-        Azure Key
-        <span class="keyline">
-          <input id="key" type="password" autocomplete="off" spellcheck="false" />
-          <button id="toggle-key" class="quiet" type="button">显示</button>
-        </span>
-        <span class="hint">在 Azure 门户打开 Translator 资源的「密钥和终结点」，复制 Key 1。</span>
+        翻译服务
+        <select id="provider">
+          <option value="azure">Azure Translator</option>
+          <option value="volcengine">火山引擎机器翻译</option>
+        </select>
       </label>
 
-      <label class="stack">
-        区域
-        <input id="region" type="text" placeholder="全球资源留空，例如 eastasia" autocomplete="off" />
-        <span class="hint">全球单服务资源不用填。区域资源或多服务资源要填创建时所在的区域。</span>
-      </label>
+      <div id="azure-fields">
+        <label class="stack">
+          Azure Key
+          <span class="keyline">
+            <input id="key" type="password" autocomplete="off" spellcheck="false" />
+            <button id="toggle-key" class="quiet" type="button">显示</button>
+          </span>
+          <span class="hint">在 Azure 门户打开 Translator 资源的「密钥和终结点」，复制 Key 1。</span>
+        </label>
+
+        <label class="stack">
+          区域
+          <input id="region" type="text" placeholder="全球资源留空，例如 eastasia" autocomplete="off" />
+          <span class="hint">全球单服务资源不用填。区域资源或多服务资源要填创建时所在的区域。</span>
+        </label>
+
+        <details>
+          <summary>接口地址</summary>
+          <label class="stack">
+            <input id="endpoint" type="url" spellcheck="false" />
+            <span class="hint">一般保持默认。只接受 Azure Translator 的官方域名。</span>
+          </label>
+        </details>
+      </div>
+
+      <div id="volc-fields" hidden>
+        <label class="stack">
+          Access Key ID
+          <input id="volc-access-key" type="text" autocomplete="off" spellcheck="false" />
+        </label>
+        <label class="stack">
+          Secret Access Key
+          <span class="keyline">
+            <input id="volc-secret-key" type="password" autocomplete="off" spellcheck="false" />
+            <button id="toggle-secret" class="quiet" type="button">显示</button>
+          </span>
+          <span class="hint">在火山引擎「访问控制 - 密钥管理」创建。需要已开通机器翻译。这里只调用纯文本翻译，不查词典。</span>
+        </label>
+      </div>
 
       <div class="row">
         <label>
@@ -44,14 +77,6 @@
         划词后自动翻译
       </label>
       <p class="hint">关掉之后，选中文字旁边会出现「翻译」按钮。右键菜单和 Alt+Shift+T 不受这个开关影响。</p>
-
-      <details>
-        <summary>接口地址</summary>
-        <label class="stack">
-          <input id="endpoint" type="url" spellcheck="false" />
-          <span class="hint">一般保持默认。只接受 Azure Translator 的官方域名。</span>
-        </label>
-      </details>
 
       <div class="actions">
         <button id="save" type="button">保存</button>

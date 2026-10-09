@@ -7,7 +7,10 @@
   <body class="popup">
     <main class="panel">
       <header class="top">
-        <h1>Transbot</h1>
+        <div>
+          <h1>Transbot</h1>
+          <p id="service" class="hint"></p>
+        </div>
         <a id="open-options" href="#">设置</a>
       </header>
       <label class="field">
@@ -27,7 +30,7 @@
       <button id="go" type="button">翻译</button>
       <p id="status" class="status" role="status" hidden></p>
       <section id="result" class="result" hidden></section>
-      <p class="hint">划词后自动出译文。关掉自动翻译时，选区旁有「翻译」按钮。快捷键 Alt+Shift+T。</p>
+      <p class="hint">划词后自动出译文。关掉自动翻译时，选区旁有「翻译」按钮。快捷键 Alt+Shift+T。翻译服务在设置里选择。</p>
     </main>
     <script type="module" src="./main.ts"></script>
   </body>

@@ -1,7 +1,8 @@
 import { azureDetect, azureDictionary, azureTranslate, AzureError, type Sense } from "./azure";
-import { isLangCode, type LangCode } from "./languages";
+import { isLangCode, langFamily, type LangCode } from "./languages";
 import { dictionaryPair, guessLang, isWordLike, smartTarget } from "./route";
 import { MAX_CHARS, type Settings } from "./settings";
+import { fromVolcLanguage, volcTranslate } from "./volcengine";
 
 export type TranslateQuery = {
   text: string;
@@ -17,6 +18,8 @@ export type Translation = {
   mode: "dictionary" | "text";
   translation: string;
   senses: Sense[];
+  provider: Settings["provider"];
+  characters: number;
 };
 
 type FetchLike = typeof fetch;
@@ -30,6 +33,7 @@ export async function translateText(
   if (!text) throw new AzureError("没有可翻译的文字。", 0);
   if (text.length > MAX_CHARS) throw new AzureError(`一次最多翻译 ${MAX_CHARS} 个字符。`, 0);
   if (query.primary === query.secondary) throw new AzureError("我的语言和外语不能相同。", 0);
+  if (settings.provider === "volcengine") return translateWithVolc(text, query, settings, fetchImpl);
 
   const explicitFrom = query.from === "auto" ? undefined : query.from;
   let source: string | undefined = explicitFrom ?? guessLang(text) ?? undefined;
@@ -44,7 +48,9 @@ export async function translateText(
   }
 
   const pair = isWordLike(text) ? dictionaryPair(source, target) : null;
+  let characters = 0;
   if (pair) {
+    characters += billedCharacters(text);
     try {
       const senses = await azureDictionary(settings, text, pair.from, pair.to, fetchImpl);
       if (senses.length > 0) {
@@ -54,6 +60,8 @@ export async function translateText(
           mode: "dictionary",
           translation: senses[0]?.text ?? "",
           senses,
+          provider: "azure",
+          characters,
         };
       }
     } catch (error) {
@@ -63,12 +71,54 @@ export async function translateText(
 
   const from = isLangCode(source) || /^[a-z]{2,3}(?:-[A-Za-z0-9]+)*$/.test(source) ? source : undefined;
   const translated = await azureTranslate(settings, text, target, from, fetchImpl);
+  characters += billedCharacters(text);
   return {
     sourceLang: translated.detectedLanguage || source,
     targetLang: target,
     mode: "text",
     translation: translated.text,
     senses: [],
+    provider: "azure",
+    characters,
   };
+}
+
+async function translateWithVolc(
+  text: string,
+  query: TranslateQuery,
+  settings: Settings,
+  fetchImpl: FetchLike,
+): Promise<Translation> {
+  const explicitFrom = query.from === "auto" ? undefined : query.from;
+  const known = explicitFrom ?? guessLang(text) ?? undefined;
+  const target = query.to === "auto" ? (known ? smartTarget(known, query.primary, query.secondary) : query.primary) : query.to;
+  let characters = billedCharacters(text);
+  const first = await volcTranslate(settings, text, target, known, fetchImpl);
+  const detected = first.detectedLanguage ? String(fromVolcLanguage(first.detectedLanguage)) : undefined;
+  if (query.to === "auto" && !known && detected && langFamily(detected) === langFamily(target)) {
+    const other = target === query.primary ? query.secondary : query.primary;
+    characters += billedCharacters(text);
+    const second = await volcTranslate(settings, text, other, detected, fetchImpl);
+    return volcResult(second.detectedLanguage ?? detected, other, second.text, characters);
+  }
+  return volcResult(known ?? detected ?? target, target, first.text, characters);
+}
+
+function volcResult(source: string, target: LangCode, text: string, characters: number): Translation {
+  const mapped = fromVolcLanguage(source);
+  return {
+    sourceLang: typeof mapped === "string" ? mapped : source,
+    targetLang: target,
+    mode: "text",
+    translation: text,
+    senses: [],
+    provider: "volcengine",
+    characters,
+  };
+}
+
+/** Characters submitted for billing. Azure counts each UTF-16 code unit in Text, including spaces; Detect is free. Volcengine counts each letter, digit, symbol, and space the same way. */
+function billedCharacters(text: string): number {
+  return text.length;
 }
 

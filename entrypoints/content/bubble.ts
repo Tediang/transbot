@@ -1,9 +1,10 @@
 import { sendExtensionMessage } from "@/lib/extension-message";
 import { clampFrame, dragFrame, resizeFromCorner } from "@/lib/frame";
 import { isResult, langChoice } from "@/lib/messages";
-import { displayLang, isLangCode, LANGS, type LangCode } from "@/lib/languages";
+import { isLangCode, LANGS, type LangCode } from "@/lib/languages";
 import { placeCard } from "@/lib/place";
-import { fillResult, resultPlainText } from "@/lib/render";
+import { fillResult, resultPlainText, routeLabel } from "@/lib/render";
+import { providerLabel, type Provider } from "@/lib/settings";
 import type { Translation } from "@/lib/translate";
 
 const CSS = `
@@ -42,7 +43,7 @@ header, footer {
 }
 header { border-bottom: 1px solid #ddd4c4; }
 footer { border-top: 1px solid #ddd4c4; }
-.route { font-size: 12px; color: #6f675c; }
+.route { flex: 1; min-width: 0; font-size: 12px; line-height: 1.35; color: #6f675c; }
 .tools, .langs { display: flex; gap: 4px; }
 .tools button, .langs button {
   border: 1px solid transparent;
@@ -139,7 +140,7 @@ footer { border-top: 1px solid #ddd4c4; }
 
 export type Bubble = {
   destroy: () => void;
-  show: (text: string, rect: DOMRect) => void;
+  show: (text: string, rect: DOMRect, provider?: Provider) => void;
   showMessage: (text: string, rect: DOMRect, message: string) => void;
   showLauncher: (text: string, rect: DOMRect) => void;
   hideLauncher: () => void;
@@ -260,7 +261,7 @@ export function createBubble(handlers: { onLaunch: (text: string, rect: DOMRect)
     }
   }
 
-  function show(text: string, rect: DOMRect): void {
+  function show(text: string, rect: DOMRect, provider?: Provider): void {
     currentText = text;
     launcherText = "";
     if (!pinned) lastRect = rect;
@@ -270,7 +271,7 @@ export function createBubble(handlers: { onLaunch: (text: string, rect: DOMRect)
     placement = "card";
     launcher.hidden = true;
     reveal(pinned ? lastRect : rect, pinned);
-    route.textContent = "翻译中…";
+    route.textContent = provider ? `翻译中… · ${providerLabel(provider)}` : "翻译中…";
     setPressed(null);
     setBodyMessage("翻译中…", "muted");
     void request(text);
@@ -378,7 +379,7 @@ export function createBubble(handlers: { onLaunch: (text: string, rect: DOMRect)
     sourceChoice = langChoice(result.sourceLang);
     targetChoice = result.targetLang;
     plain = resultPlainText(result);
-    route.textContent = `${displayLang(result.sourceLang)} → ${displayLang(result.targetLang)} · ${result.mode === "dictionary" ? "词典" : "译文"}`;
+    route.textContent = routeLabel(result);
     setPressed(result.targetLang, result.sourceLang);
     fillResult(body, result);
     if (!pinned) move(lastRect);

@@ -6,7 +6,7 @@ export default defineConfig({
   manifest: {
     ...(releaseVersion ? { version: releaseVersion } : {}),
     name: "Transbot",
-    description: "划词翻译和翻译框，使用 Azure Translator。",
+    description: "划词翻译和翻译框，使用 Azure 或火山引擎机器翻译。",
     permissions: ["storage", "contextMenus"],
     host_permissions: [
       "https://api.cognitive.microsofttranslator.com/*",
@@ -14,6 +14,7 @@ export default defineConfig({
       "https://api-apc.cognitive.microsofttranslator.com/*",
       "https://api-eur.cognitive.microsofttranslator.com/*",
       "https://*.cognitiveservices.azure.com/*",
+      "https://translate.volcengineapi.com/*",
     ],
     commands: {
       "translate-selection": {

@@ -1,5 +1,12 @@
+import { displayLang } from "./languages";
 import { posLabel } from "./pos";
+import { providerLabel } from "./settings";
 import type { Translation } from "./translate";
+
+export function routeLabel(result: Translation): string {
+  const kind = result.mode === "dictionary" ? "词典" : "译文";
+  return `${displayLang(result.sourceLang)} → ${displayLang(result.targetLang)} · ${kind} · ${providerLabel(result.provider)} · 消耗 ${result.characters} 字符`;
+}
 
 export function fillResult(container: HTMLElement, result: Translation): void {
   container.replaceChildren();

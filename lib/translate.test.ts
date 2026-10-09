@@ -4,9 +4,12 @@ import { DEFAULT_ENDPOINT, type Settings } from "./settings";
 import { translateText, type TranslateQuery } from "./translate";
 
 const settings: Settings = {
+  provider: "azure",
   key: "secret",
   region: "eastasia",
   endpoint: DEFAULT_ENDPOINT,
+  volcAccessKey: "",
+  volcSecretKey: "",
   primary: "zh-Hans",
   secondary: "en",
   selectionEnabled: true,
@@ -37,6 +40,8 @@ describe("translateText", () => {
     const result = await translateText({ ...baseQuery, text: "bank", from: "en", to: "zh-Hans" }, settings, seen.fetchImpl);
 
     expect(result.mode).toBe("dictionary");
+    expect(result.provider).toBe("azure");
+    expect(result.characters).toBe(4);
     expect(result.translation).toBe("银行");
     expect(result.senses[0]?.back).toEqual(["bank", "banking"]);
     expect(header(seen.calls[0]?.init, "Ocp-Apim-Subscription-Key")).toBe("secret");
@@ -93,6 +98,7 @@ describe("translateText", () => {
     const result = await translateText({ ...baseQuery, text: "hello 世界" }, settings, seen.fetchImpl);
     expect(seen.calls.map((call) => call.url).join(" ")).toContain("/detect");
     expect(result.translation).toBe("你好，世界");
+    expect(result.characters).toBe("hello 世界".length);
   });
 
   it("falls back to translate when the dictionary rejects the word", async () => {
@@ -103,6 +109,7 @@ describe("translateText", () => {
 
     const result = await translateText({ ...baseQuery, text: "bank", from: "en", to: "zh-Hans" }, settings, seen.fetchImpl);
     expect(result.mode).toBe("text");
+    expect(result.characters).toBe(8);
     expect(result.translation).toBe("银行账户");
   });
 
@@ -116,6 +123,72 @@ describe("translateText", () => {
     const seen = installFetch(() => json({ translations: [{ text: "你好", to: "zh-Hans" }] }));
     await translateText({ ...baseQuery, text: "Hello there." }, { ...settings, region: "" }, seen.fetchImpl);
     expect(header(seen.calls[0]?.init, "Ocp-Apim-Subscription-Region")).toBeNull();
+  });
+
+  it("uses Volcengine plain text and skips the dictionary", async () => {
+    const seen = installFetch(() => {
+      return new Response(
+        JSON.stringify({
+          TranslationList: [{ Translation: "银行", DetectedSourceLanguage: "en" }],
+        }),
+        { status: 200 },
+      );
+    });
+    const result = await translateText(
+      { ...baseQuery, text: "bank", from: "en", to: "zh-Hans" },
+      { ...settings, provider: "volcengine", volcAccessKey: "AKIDexample", volcSecretKey: "secretkey" },
+      seen.fetchImpl,
+    );
+    expect(seen.calls).toHaveLength(1);
+    expect(seen.calls[0]?.url).toContain("translate.volcengineapi.com");
+    expect(seen.calls[0]?.url).toContain("Version=2025-03-01");
+    expect(JSON.parse(String(seen.calls[0]?.init?.body))).toEqual({
+      SourceLanguage: "en",
+      TargetLanguage: "zh",
+      TextList: ["bank"],
+    });
+    expect(result.mode).toBe("text");
+    expect(result.provider).toBe("volcengine");
+    expect(result.characters).toBe(4);
+    expect(result.translation).toBe("银行");
+    expect(result.senses).toEqual([]);
+  });
+
+  it("retries Volcengine once when auto-detect lands on the assumed target", async () => {
+    const bodies: unknown[] = [];
+    const fetchImpl: typeof fetch = async (_input, init) => {
+      bodies.push(JSON.parse(String(init?.body)));
+      return new Response(
+        JSON.stringify({
+          TranslationList: [
+            {
+              Translation: bodies.length === 1 ? "你好世界" : "Hello world",
+              DetectedSourceLanguage: "zh",
+            },
+          ],
+        }),
+        { status: 200 },
+      );
+    };
+
+    const result = await translateText(
+      { ...baseQuery, text: "Hello 世界", from: "auto", to: "auto" },
+      { ...settings, provider: "volcengine", volcAccessKey: "AKIDexample", volcSecretKey: "secretkey" },
+      fetchImpl,
+    );
+
+    expect(bodies).toEqual([
+      { TargetLanguage: "zh", TextList: ["Hello 世界"] },
+      { SourceLanguage: "zh", TargetLanguage: "en", TextList: ["Hello 世界"] },
+    ]);
+    expect(result).toMatchObject({
+      sourceLang: "zh-Hans",
+      targetLang: "en",
+      mode: "text",
+      translation: "Hello world",
+      senses: [],
+      characters: "Hello 世界".length * 2,
+    });
   });
 
   it("rejects an identical explicit language pair before calling Azure", async () => {

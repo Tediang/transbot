@@ -1,5 +1,6 @@
 import { AzureError } from "@/lib/azure";
 import { langChoice, isTranslateRequest, type ResultMessage, type TranslateRequest } from "@/lib/messages";
+import { hasCredentials } from "@/lib/settings";
 import { loadSettings } from "@/lib/storage";
 import { translateText, type Translation } from "@/lib/translate";
 
@@ -31,9 +32,10 @@ export default defineBackground(() => {
         .then((settings) => {
           sendResponse({
             selectionEnabled: settings.selectionEnabled,
-            hasKey: settings.key.length > 0,
+            hasKey: hasCredentials(settings),
             primary: settings.primary,
             secondary: settings.secondary,
+            provider: settings.provider,
           });
         })
         .catch((error: unknown) => {
@@ -89,6 +91,7 @@ async function run(message: TranslateRequest): Promise<ResultMessage> {
     to: query.to,
     primary: query.primary,
     secondary: query.secondary,
+    provider: settings.provider,
   });
   const cached = cache.get(cacheKey);
   if (cached) {
