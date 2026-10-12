@@ -1,5 +1,6 @@
 import "~/assets/page.css";
 import { isResult } from "@/lib/messages";
+import { formatDuration } from "@/lib/render";
 import { isLangCode, LANGS } from "@/lib/languages";
 import { assertEndpoint, DEFAULT_ENDPOINT, normalizeSettings, type Provider, type Settings } from "@/lib/settings";
 import { loadSettings, settingsItem } from "@/lib/storage";
@@ -82,7 +83,7 @@ async function testConnection(): Promise<void> {
       show(response.error, "error");
       return;
     }
-    show(`连接成功：hello → ${response.translation}`, "muted");
+    show(`连接成功：hello → ${response.translation}，耗时 ${formatDuration(response.durationMs)}`, "muted");
   } catch {
     show("翻译进程没有响应。", "error");
   }

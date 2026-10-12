@@ -77,6 +77,7 @@ async function askActiveTab(): Promise<void> {
 }
 
 async function run(message: TranslateRequest): Promise<ResultMessage> {
+  const started = performance.now();
   const settings = await loadSettings();
   const query = {
     text: message.text,
@@ -97,7 +98,7 @@ async function run(message: TranslateRequest): Promise<ResultMessage> {
   if (cached) {
     cache.delete(cacheKey);
     cache.set(cacheKey, cached);
-    return { ok: true, ...cached };
+    return { ok: true, ...cached, durationMs: elapsedMs(started) };
   }
 
   const translation = await translateText(query, settings);
@@ -106,7 +107,11 @@ async function run(message: TranslateRequest): Promise<ResultMessage> {
     const oldest = cache.keys().next().value;
     if (oldest) cache.delete(oldest);
   }
-  return { ok: true, ...translation };
+  return { ok: true, ...translation, durationMs: elapsedMs(started) };
+}
+
+function elapsedMs(started: number): number {
+  return Math.max(0, Math.round(performance.now() - started));
 }
 
 function errorText(error: unknown): string {

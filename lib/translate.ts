@@ -20,7 +20,10 @@ export type Translation = {
   senses: Sense[];
   provider: Settings["provider"];
   characters: number;
+  durationMs: number;
 };
+
+type BuiltTranslation = Omit<Translation, "durationMs">;
 
 type FetchLike = typeof fetch;
 
@@ -29,6 +32,16 @@ export async function translateText(
   settings: Settings,
   fetchImpl: FetchLike = fetch,
 ): Promise<Translation> {
+  const started = performance.now();
+  const translation = await translateRequest(query, settings, fetchImpl);
+  return { ...translation, durationMs: elapsedMs(started) };
+}
+
+async function translateRequest(
+  query: TranslateQuery,
+  settings: Settings,
+  fetchImpl: FetchLike,
+): Promise<BuiltTranslation> {
   const text = query.text.trim();
   if (!text) throw new AzureError("没有可翻译的文字。", 0);
   if (text.length > MAX_CHARS) throw new AzureError(`一次最多翻译 ${MAX_CHARS} 个字符。`, 0);
@@ -88,7 +101,7 @@ async function translateWithVolc(
   query: TranslateQuery,
   settings: Settings,
   fetchImpl: FetchLike,
-): Promise<Translation> {
+): Promise<BuiltTranslation> {
   const explicitFrom = query.from === "auto" ? undefined : query.from;
   const known = explicitFrom ?? guessLang(text) ?? undefined;
   const target = query.to === "auto" ? (known ? smartTarget(known, query.primary, query.secondary) : query.primary) : query.to;
@@ -104,7 +117,7 @@ async function translateWithVolc(
   return volcResult(known ?? detected ?? target, target, first.text, characters);
 }
 
-function volcResult(source: string, target: LangCode, text: string, characters: number): Translation {
+function volcResult(source: string, target: LangCode, text: string, characters: number): BuiltTranslation {
   const mapped = fromVolcLanguage(source);
   return {
     sourceLang: typeof mapped === "string" ? mapped : source,
@@ -120,5 +133,9 @@ function volcResult(source: string, target: LangCode, text: string, characters: 
 /** Characters submitted for billing. Azure counts each UTF-16 code unit in Text, including spaces; Detect is free. Volcengine counts each letter, digit, symbol, and space the same way. */
 function billedCharacters(text: string): number {
   return text.length;
+}
+
+function elapsedMs(started: number): number {
+  return Math.max(0, Math.round(performance.now() - started));
 }
 

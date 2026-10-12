@@ -42,6 +42,7 @@ describe("translateText", () => {
     expect(result.mode).toBe("dictionary");
     expect(result.provider).toBe("azure");
     expect(result.characters).toBe(4);
+    expect(result.durationMs).toBeGreaterThanOrEqual(0);
     expect(result.translation).toBe("银行");
     expect(result.senses[0]?.back).toEqual(["bank", "banking"]);
     expect(header(seen.calls[0]?.init, "Ocp-Apim-Subscription-Key")).toBe("secret");
@@ -189,6 +190,17 @@ describe("translateText", () => {
       senses: [],
       characters: "Hello 世界".length * 2,
     });
+  });
+
+  it("records how long the provider calls took", async () => {
+    const fetchImpl: typeof fetch = async () => {
+      await new Promise((resolve) => setTimeout(resolve, 40));
+      return json({ translations: [{ text: "你好", to: "zh-Hans" }] });
+    };
+
+    const result = await translateText({ ...baseQuery, text: "Hello there." }, settings, fetchImpl);
+    expect(result.durationMs).toBeGreaterThanOrEqual(40);
+    expect(result.durationMs).toBeLessThan(2000);
   });
 
   it("rejects an identical explicit language pair before calling Azure", async () => {

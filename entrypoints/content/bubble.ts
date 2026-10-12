@@ -7,6 +7,9 @@ import { fillResult, resultPlainText, routeLabel } from "@/lib/render";
 import { providerLabel, type Provider } from "@/lib/settings";
 import type { Translation } from "@/lib/translate";
 
+/** Wide enough for the route line, including provider, character count, and elapsed time, to stay on one line. */
+const CARD_WIDTH = 640;
+
 const CSS = `
 :host {
   all: initial;
@@ -21,7 +24,7 @@ button { cursor: pointer; }
 .launcher[hidden] { display: none !important; }
 .card {
   position: relative;
-  width: 320px;
+  width: min(${CARD_WIDTH}px, calc(100vw - 16px));
   max-height: min(420px, 70vh);
   display: flex;
   flex-direction: column;
@@ -398,7 +401,7 @@ export function createBubble(handlers: { onLaunch: (text: string, rect: DOMRect)
       const next = dragFrame(
         { x: event.clientX, y: event.clientY },
         dragOffset,
-        { width: card.offsetWidth || 320, height: card.offsetHeight || 180 },
+        { width: card.offsetWidth || CARD_WIDTH, height: card.offsetHeight || 180 },
         view,
       );
       host.style.left = `${next.left}px`;
@@ -425,7 +428,7 @@ export function createBubble(handlers: { onLaunch: (text: string, rect: DOMRect)
     if (dragOffset || resizeStart) return;
     const box = host.getBoundingClientRect();
     const next = clampFrame(
-      { left: box.left, top: box.top, width: card.offsetWidth || 320, height: card.offsetHeight || 180 },
+      { left: box.left, top: box.top, width: card.offsetWidth || CARD_WIDTH, height: card.offsetHeight || 180 },
       { width: window.innerWidth, height: window.innerHeight },
     );
     if (Math.abs(next.left - box.left) > 0.5) host.style.left = `${next.left}px`;
@@ -450,7 +453,7 @@ export function createBubble(handlers: { onLaunch: (text: string, rect: DOMRect)
   }
 
   function move(rect: DOMRect): void {
-    const box = placeCard(rect, { width: card.offsetWidth || 320, height: card.offsetHeight || 180 }, {
+    const box = placeCard(rect, { width: card.offsetWidth || CARD_WIDTH, height: card.offsetHeight || 180 }, {
       width: window.innerWidth,
       height: window.innerHeight,
     });

@@ -5,7 +5,13 @@ import type { Translation } from "./translate";
 
 export function routeLabel(result: Translation): string {
   const kind = result.mode === "dictionary" ? "词典" : "译文";
-  return `${displayLang(result.sourceLang)} → ${displayLang(result.targetLang)} · ${kind} · ${providerLabel(result.provider)} · 消耗 ${result.characters} 字符`;
+  return `${displayLang(result.sourceLang)} → ${displayLang(result.targetLang)} · ${kind} · ${providerLabel(result.provider)} · 消耗 ${result.characters} 字符 · 耗时 ${formatDuration(result.durationMs)}`;
+}
+
+export function formatDuration(ms: number): string {
+  const rounded = Number.isFinite(ms) ? Math.max(0, Math.round(ms)) : 0;
+  if (rounded < 1000) return `${rounded} 毫秒`;
+  return `${(rounded / 1000).toFixed(1).replace(/\.0$/, "")} 秒`;
 }
 
 export function fillResult(container: HTMLElement, result: Translation): void {
