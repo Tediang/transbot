@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Transbot 翻译</title>
+  </head>
+  <body class="desk">
+    <main class="desk">
+      <header class="desk-top">
+        <h1>Transbot</h1>
+        <div class="desk-tools">
+          <label>
+            服务
+            <select id="provider">
+              <option value="azure">Azure Translator</option>
+              <option value="volcengine">火山引擎机器翻译</option>
+            </select>
+          </label>
+          <a href="options.html">设置</a>
+        </div>
+      </header>
+      <div class="stage">
+        <section class="pane">
+          <div class="pane-bar">
+            <select id="from" aria-label="源语言"></select>
+            <button id="go" type="button">翻译</button>
+          </div>
+          <textarea id="source" placeholder="输入或粘贴要翻译的文字"></textarea>
+          <p id="source-count" class="count">0 字符</p>
+        </section>
+        <button id="swap" class="swap" type="button" title="交换语言" aria-label="交换语言">⇄</button>
+        <section class="pane">
+          <div class="pane-bar">
+            <select id="to" aria-label="目标语言"></select>
+            <button id="copy" class="quiet" type="button">复制</button>
+          </div>
+          <textarea id="target" readonly placeholder="译文出现在这里"></textarea>
+          <p id="target-count" class="count">0 字符</p>
+        </section>
+      </div>
+      <div class="foot">
+        <p id="status" class="status" role="status"></p>
+        <p id="route" class="route"></p>
+      </div>
+    </main>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

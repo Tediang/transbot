@@ -36,6 +36,100 @@ body.popup { width: 360px; }
 
 body.page { max-width: 640px; margin: 32px auto; padding: 0 20px 48px; }
 
+body.desk { height: 100vh; overflow: hidden; padding: 0; font-size: 16px; }
+
+body.desk > main { flex: 1; min-height: 0; height: auto; }
+
+.desk {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 20px 16px;
+}
+
+.desk-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+
+.desk-tools { display: flex; align-items: center; gap: 16px; }
+
+.desk-tools label { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 15px; }
+
+.desk-tools select { width: auto; min-width: 14em; padding: 8px 12px; font-size: 16px; }
+
+.stage {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: stretch;
+}
+
+.desk .pane {
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--field);
+  overflow: hidden;
+  gap: 0;
+}
+
+.pane-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px 8px 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.pane-bar select {
+  width: auto;
+  min-width: 8em;
+  border: 0;
+  background: transparent;
+  padding: 6px 4px;
+  font-size: 17px;
+  font-weight: 650;
+}
+
+.desk .pane textarea {
+  flex: 1;
+  min-height: 0;
+  resize: none;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 16px 18px;
+  font-size: 22px;
+  line-height: 1.65;
+}
+
+.desk .count { padding: 8px 18px 12px; color: var(--muted); font-size: 15px; }
+
+.swap {
+  align-self: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--field);
+  color: var(--ink);
+  font-size: 20px;
+}
+
+.desk .foot { display: flex; flex-direction: column; gap: 4px; min-height: 2.6em; }
+
+.desk .status, .desk .route { font-size: 15px; }
+
+@media (max-width: 720px) {
+  .stage { grid-template-columns: 1fr; }
+  .swap { justify-self: center; }
+}
+
 button, input, select, textarea { font: inherit; color: inherit; }
 
 h1 { font-size: 22px; font-weight: 650; margin: 0; }
@@ -55,7 +149,7 @@ a { color: var(--accent); }
 
 .top { justify-content: space-between; }
 
-.row label, .field, .stack { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.row label, .field, .stack, .pane { display: flex; flex-direction: column; gap: 4px; flex: 1; }
 
 .hint, .status { color: var(--muted); font-size: 12px; }
 
