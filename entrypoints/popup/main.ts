@@ -26,6 +26,11 @@ const serviceLine = service;
 
 void init();
 
+document.querySelector("#open-translate")?.addEventListener("click", (event) => {
+  event.preventDefault();
+  void browser.tabs.create({ url: browser.runtime.getURL("/translate.html") });
+});
+
 document.querySelector("#open-options")?.addEventListener("click", (event) => {
   event.preventDefault();
   void browser.runtime.openOptionsPage();

@@ -149,6 +149,8 @@ a { color: var(--accent); }
 
 .top { justify-content: space-between; }
 
+.links { display: flex; align-items: center; gap: 12px; flex: none; white-space: nowrap; }
+
 .row label, .field, .stack, .pane { display: flex; flex-direction: column; gap: 4px; flex: 1; }
 
 .hint, .status { color: var(--muted); font-size: 12px; }
